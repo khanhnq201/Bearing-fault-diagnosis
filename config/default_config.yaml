@@ -1,0 +1,134 @@
+randomseed: 42
+dataloader:
+  path: "CWRU-dataset-main"
+  sample_length: 4096
+  overlapping_ratio: 0
+  n_rev_resampling: 64 #max: 400 ~ 200th order
+  preprocessing_type: 'order_spectrum'   #raw/ freq_spectrum/ order_spectrum/ order_spectrogram/ 
+  batch_size: 32
+  spectrogram:
+    nperseg: 64
+    ratio: 0.5
+  data_type: 'by_bearing_leakaged'
+  train_list:
+    - "97DE"
+    - "98DE"
+
+    - "169DE"
+    - "170DE"
+    - "105DE"
+    - "106DE"
+    - "107DE"
+    - "108DE"
+
+    - "144DE"
+    - "145DE"
+    - "146DE"
+    - "147DE"
+
+    - "156DE"
+    - "158DE"
+    - "130DE"
+    - "131DE"
+    - "132DE"
+    - "133DE"
+
+  val_list:
+    - "99DE"
+
+    - "171DE"
+    - "171DE"
+
+
+    - "159DE"
+    - "160DE"
+  test_list:
+    - "100DE"
+
+    - "209DE"
+    - "210DE"
+    - "211DE"
+    - "212DE"
+
+    - "246DE"
+    - "247DE"
+    - "248DE"
+    - "249DE"
+
+    - "234DE"
+    - "235DE"
+    - "236DE"
+    - "237DE"
+
+    - "258DE"
+    - "259DE"
+    - "260DE"
+    - "261DE"
+  # data_type: 'by_load'
+  # train_list:
+  #   - "97DE"
+
+  #   - "105DE"
+  #   - "169DE"
+  #   - "209DE"
+
+  #   - "130DE"
+  #   - "234DE"
+  #   - "144DE"  
+  #   - "156DE"  
+  #   - "246DE"  
+  #   - "258DE"
+
+  #   - "98DE"
+
+  #   - "106DE"
+  #   - "170DE"
+  #   - "210DE"
+
+  #   - "131DE"
+  #   - "235DE"
+  #   - "145DE"
+  #   - "158DE"
+  #   - "247DE"
+  #   - "259DE"
+
+  # val_list:
+  #   - "99DE"
+
+  #   - "107DE"
+  #   - "171DE"
+  #   - "211DE"
+
+  #   - "132DE"
+  #   - "236DE"
+  #   - "146DE"
+  #   - "159DE"
+  #   - "248DE"
+  #   - "260DE"
+  # test_list:
+  #   - "100DE"
+
+  #   - "108DE"
+  #   - "172DE"
+  #   - "212DE"
+
+  #   - "133DE"
+  #   - "237DE"
+  #   - "147DE"
+  #   - "160DE"
+  #   - "249DE"
+  #   - "261DE"
+
+model: 'Simple1DCNN' #Basic1DCNN/ Simple1DCNN/ WDCNN/ Baseline
+
+training:
+  learning_rate: 0.0001
+  epochs: 200
+
+heatmap: 
+  data_list:
+    - "97DE"
+    - "105DE"
+    - "144DE"
+    - "130DE"
+  name: 'order_bybearing.png'

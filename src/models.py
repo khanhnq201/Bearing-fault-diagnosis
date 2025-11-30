@@ -1,108 +1,6 @@
 import torch
 import torch.nn as nn
-
-class StudentModel(nn.Module):
-    def __init__(self, num_classes=10):
-        super(StudentModel, self).__init__()
-
-        self.conv_layers = nn.Sequential(
-            nn.Conv2d(1, 8, kernel_size= 3, stride= 1, padding= 1, bias = False),
-            nn.BatchNorm2d(8),
-            nn.ReLU(inplace=True),
-
-            nn.Conv2d(8, 32, kernel_size= 3, stride= 1, padding= 1, bias = False),
-            nn.BatchNorm2d(32),
-            nn.ReLU(inplace=True),
-
-            nn.Conv2d(32, 128, kernel_size= 3, stride= 1, padding= 1, bias = False),
-            nn.BatchNorm2d(128),
-            nn.ReLU(inplace=True),
-        )
-        self.avgpool = nn.AdaptiveAvgPool2d((1,1))
-        self.fc = nn.Linear(128, num_classes)
-
-    def forward(self, x):
-        x = self.conv_layers(x)
-        x = self.avgpool(x)
-        x = torch.flatten(x,1)
-        x = self.fc(x)
-        return x
-
-class StudentModel_Improved(nn.Module):
-    def __init__(self, num_classes=10):
-        super(StudentModel_Improved, self).__init__()
-
-        self.conv_layers = nn.Sequential(
-            nn.Conv2d(1, 8, kernel_size= 3, stride= 1, padding= 1, bias = False),
-            nn.BatchNorm2d(8),
-            nn.ReLU(inplace=True),
-
-            nn.Conv2d(8, 16, kernel_size= 3, stride= 1, padding= 1, bias = False),
-            nn.BatchNorm2d(16),
-            nn.ReLU(inplace=True),
-
-            nn.Conv2d(16, 32, kernel_size= 3, stride= 1, padding= 1, bias = False),
-            nn.BatchNorm2d(32),
-            nn.ReLU(inplace=True),
-
-            nn.Conv2d(32, 64, kernel_size= 3, stride= 1, padding= 1, bias = False),
-            nn.BatchNorm2d(64),
-            nn.ReLU(inplace=True),
-
-            nn.Conv2d(64, 128, kernel_size= 3, stride= 1, padding= 1, bias = False),
-            nn.BatchNorm2d(128),
-            nn.ReLU(inplace=True),
-        )
-        self.avgpool = nn.AdaptiveAvgPool2d((1,1))
-        self.fc = nn.Linear(128, num_classes)
-
-    def forward(self, x):
-        x = self.conv_layers(x)
-        x = self.avgpool(x)
-        x = torch.flatten(x,1)
-        x = self.fc(x)
-        return x
-
-class StudentModel_With_FCDropout(nn.Module):
-    def __init__(self, num_classes=10, dropout_rate=0.2): # Thêm dropout_rate
-        super().__init__()
-
-        self.conv_layers = nn.Sequential(
-            nn.Conv2d(1, 8, kernel_size= 3, stride= 1, padding= 1, bias = False),
-            nn.BatchNorm2d(8),
-            nn.ReLU(inplace=True),
-
-            nn.Conv2d(8, 16, kernel_size= 3, stride= 1, padding= 1, bias = False),
-            nn.BatchNorm2d(16),
-            nn.ReLU(inplace=True),
-
-            nn.Conv2d(16, 32, kernel_size= 3, stride= 1, padding= 1, bias = False),
-            nn.BatchNorm2d(32),
-            nn.ReLU(inplace=True),
-
-            nn.Conv2d(32, 64, kernel_size= 3, stride= 1, padding= 1, bias = False),
-            nn.BatchNorm2d(64),
-            nn.ReLU(inplace=True),
-
-            nn.Conv2d(64, 128, kernel_size= 3, stride= 1, padding= 1, bias = False),
-            nn.BatchNorm2d(128),
-            nn.ReLU(inplace=True),
-        )
-        
-        # Tách phần classifier ra để thêm Dropout
-        self.classifier = nn.Sequential(
-            nn.AdaptiveAvgPool2d((1, 1)),
-            nn.Flatten(),
-            nn.Dropout(p=dropout_rate), # <-- THÊM DROPOUT Ở ĐÂY
-            nn.Linear(128, num_classes)
-        )
-
-    def forward(self, x):
-        x = self.conv_layers(x)
-        x = self.classifier(x)
-        return x
-
-#--- 1D model---
+import torch.nn.functional as F
 
 class WDCNN(nn.Module):
     """Kiến trúc WDCNN với lớp conv đầu tiên rộng và các lớp sâu theo sau."""
@@ -192,7 +90,6 @@ class Narrow_1DCNN(nn.Module):
                  dropout_rate: float = 0.2): # Có thể giảm dropout
         super().__init__()
 
-        # Giữ nguyên 2 khối Conv nhưng giảm số kênh (ví dụ: giảm một nửa)
         self.features = nn.Sequential(
             nn.Conv1d(in_channels=input_channels,
                       out_channels=32,  # 64 -> 32
@@ -211,16 +108,9 @@ class Narrow_1DCNN(nn.Module):
             nn.AdaptiveMaxPool1d(output_size=1)
         )
 
-        # Có thể giữ lại classifier phức tạp hơn một chút hoặc đơn giản hóa nó
-        # Ở đây ta đơn giản hóa bằng cách bỏ lớp Linear ẩn
         self.classifier = nn.Sequential(
             nn.Flatten(),      # 64 x 1 -> 64
             nn.Linear(64, num_classes)
-            # Nếu muốn, bạn có thể thêm lại một lớp ẩn nhỏ hơn:
-            # nn.Linear(64, 64),
-            # nn.ReLU(inplace=True),
-            # nn.Dropout(dropout_rate),
-            # nn.Linear(64, num_classes)
         )
 
     def forward(self, x):
@@ -265,50 +155,6 @@ class Wider1DCNN(nn.Module):
         x = self.classifier(x)
         return x
 
-# class Deeper1DCNN(nn.Module):
-#     def __init__(self,
-#                  input_channels: int,
-#                  num_classes: int,
-#                  dropout_rate: float = 0.5):
-#         super().__init__()
-
-#         self.features = nn.Sequential(
-#             # Block 1
-#             nn.Conv1d(in_channels=input_channels, out_channels=64, kernel_size=3, padding=1),
-#             nn.BatchNorm1d(64),
-#             nn.ReLU(inplace=True),
-#             nn.MaxPool1d(kernel_size=2),
-
-#             # Block 2
-#             nn.Conv1d(in_channels=64, out_channels=128, kernel_size=3, padding=1),
-#             nn.BatchNorm1d(128),
-#             nn.ReLU(inplace=True),
-#             nn.MaxPool1d(kernel_size=2),
-
-#             # Block 3 (MỚI)
-#             nn.Conv1d(in_channels=128, out_channels=256, kernel_size=3, padding=1),
-#             nn.BatchNorm1d(256),
-#             nn.ReLU(inplace=True),
-            
-#             # Global Pooling
-#             nn.AdaptiveMaxPool1d(output_size=1)
-#         )
-
-#         # Classifier phải được cập nhật để nhận đầu vào 256 channels
-#         self.classifier = nn.Sequential(
-#             nn.Flatten(),
-#             # Kích thước đầu vào của Linear layer bây giờ là 256
-#             nn.Linear(256, 128), 
-#             nn.ReLU(inplace=True),
-#             nn.Dropout(dropout_rate),
-#             nn.Linear(128, num_classes)
-#         )
-
-#     def forward(self, x):
-#         x = self.features(x)
-#         x = self.classifier(x)
-#         return x
-
 class Deeper1DCNN(nn.Module):
     def __init__(self,
                  input_channels: int,
@@ -320,26 +166,26 @@ class Deeper1DCNN(nn.Module):
             # Block 1
             nn.Conv1d(in_channels=input_channels, out_channels=64, kernel_size=3, padding=1),
             nn.BatchNorm1d(64),
-            nn.ReLU(inplace=True),
+            nn.ReLU(inplace=False),
             nn.MaxPool1d(kernel_size=2),
 
             # Block 2
             nn.Conv1d(in_channels=64, out_channels=128, kernel_size=3, padding=1),
             nn.BatchNorm1d(128),
-            nn.ReLU(inplace=True),
+            nn.ReLU(inplace=False),
             nn.MaxPool1d(kernel_size=2),
 
             # Block 3 (Lớp Conv cuối cùng)
             nn.Conv1d(in_channels=128, out_channels=256, kernel_size=3, padding=1),
             nn.BatchNorm1d(256),
-            nn.ReLU(inplace=True),
+            nn.ReLU(inplace=False),
         )
         
         self.pool = nn.AdaptiveMaxPool1d(output_size=1)
 
         self.classifier = nn.Sequential(
             nn.Linear(256, 128), 
-            nn.ReLU(inplace=True),
+            nn.ReLU(inplace=False),
             nn.Dropout(dropout_rate),
             nn.Linear(128, num_classes)
         )
@@ -361,4 +207,75 @@ class Deeper1DCNN(nn.Module):
         
         return output
 
+class SimpleCNN1D(nn.Module):
+    def __init__(self,
+                 input_channels: int,
+                 num_classes: int,
+                 dropout_rate: float = 0.5):
+        super().__init__()
+        
+        self.conv1 = nn.Conv1d(input_channels, 64, kernel_size=3, padding=1)
+        self.bn1 = nn.BatchNorm1d(64)
+        self.relu1 = nn.ReLU()
+        self.pool1 = nn.MaxPool1d(2)
+        
+        self.conv2 = nn.Conv1d(64, 128, kernel_size=3, padding=1)
+        self.bn2 = nn.BatchNorm1d(128)
+        self.relu2 = nn.ReLU()
+        self.pool2 = nn.MaxPool1d(2)
+        
+        self.conv3 = nn.Conv1d(128, 256, kernel_size=3, padding=1)
+        self.bn3 = nn.BatchNorm1d(256)
+        self.relu3 = nn.ReLU()
+        
+        self.global_pool = nn.AdaptiveAvgPool1d(1)  # Use AvgPool instead of MaxPool
+        
+        self.dropout = nn.Dropout(dropout_rate)
+        self.fc1 = nn.Linear(256, 128)
+        self.relu_fc = nn.ReLU()
+        self.fc2 = nn.Linear(128, num_classes)
+    
+    def forward(self, x):
+        x = self.pool1(self.relu1(self.bn1(self.conv1(x))))
+        x = self.pool2(self.relu2(self.bn2(self.conv2(x))))
+        x = self.relu3(self.bn3(self.conv3(x)))
+        
+        x = self.global_pool(x)
+        x = torch.flatten(x, 1)
+        
+        x = self.dropout(x)
+        x = self.relu_fc(self.fc1(x))
+        x = self.fc2(x)
+        
+        return x
 
+class Baseline(nn.Module):
+    def __init__(self, num_classes=3):
+        super(Baseline, self).__init__()
+        
+        self.conv1 = nn.Conv2d(1, 32, kernel_size=3, padding=1)
+        self.pool1 = nn.MaxPool2d(2, stride=2)
+        
+        self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
+        self.pool2 = nn.MaxPool2d(2, stride=2)
+        
+        self.conv3 = nn.Conv2d(64, 128, kernel_size=3, padding=1)
+        self.pool3 = nn.MaxPool2d(2, stride=2)
+        
+        # Dùng LazyLinear - tự động tính input size
+        self.fc1 = nn.LazyLinear(625)
+        self.dropout = nn.Dropout(0.5)
+        self.fc2 = nn.Linear(625, num_classes)
+        
+    def forward(self, x):
+        x = self.pool1(F.relu(self.conv1(x)))
+        x = self.pool2(F.relu(self.conv2(x)))
+        x = self.pool3(F.relu(self.conv3(x)))
+        
+        x = x.view(x.size(0), -1)
+        
+        x = F.relu(self.fc1(x))
+        x = self.dropout(x)
+        x = self.fc2(x)
+        
+        return x
